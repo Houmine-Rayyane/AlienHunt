@@ -31,7 +31,7 @@ almasks_list = []
 
 #enemies respawn
 ALIENS_TIMER = pygame.USEREVENT + 1
-pygame.time.set_timer(ALIENS_TIMER,700)
+pygame.time.set_timer(ALIENS_TIMER,500)
 
 #Border 
 border = pygame.Rect(0,50,WIDTH, 5)
@@ -49,8 +49,6 @@ bullets = []
 #A2_HIT = pygame.USEREVENT + 2
 
 bullet_sound = pygame.mixer.Sound('audio/bulletsound.mp3')
-#space_sound = pygame.mixer.Sound('audio/spacesound.mp3')
-
 game_active = True
         
 def handle_aliens(aliens_list,almasks_list):
@@ -61,10 +59,17 @@ def handle_aliens(aliens_list,almasks_list):
     aliens_list.append(new_alien_rect)
     almasks_list.append(pygame.mask.from_surface(alien))
 
-def shoot(bullets,ah_rect):
+def shoot(bullets):
     for bullet in bullets:
         bullet.y -=15
-        
+        #Check for aliens/bullet collisions
+        for alien_rect, alien_mask in zip(aliens_list,almasks_list):
+            if alien_rect.collidepoint(bullet.x, bullet.y):
+                aliens_list.remove(alien_rect)
+                almasks_list.remove(alien_mask)
+                bullets.remove(bullet)
+                
+                
 def move_spaceship(keys_pressed, ah_rect):
     if keys_pressed[pygame.K_LEFT] and ah_rect.x > - 20:
       ah_rect.x -=5   
@@ -100,7 +105,7 @@ while True:
         # Getting familiar with the built-in function  "zip"
         for alien_rect, alien_mask in zip(aliens_list,almasks_list):
             screen.blit(alien, alien_rect)
-            alien_rect.y += 3
+            alien_rect.y += 6
             if ah_mask.overlap(alien_mask,(alien_rect.x - ah_rect.x, alien_rect.y - ah_rect.y)):
                 health -=1
                 aliens_list.remove(alien_rect)
@@ -117,6 +122,6 @@ while True:
      
     keys_pressed= pygame.key.get_pressed()        
     move_spaceship(keys_pressed, ah_rect)     
-    shoot(bullets,ah_rect)
+    shoot(bullets)
     pygame.display.update()
     clk.tick(Fps)
