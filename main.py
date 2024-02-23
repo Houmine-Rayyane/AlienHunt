@@ -83,6 +83,9 @@ def move_spaceship(keys_pressed, ah_rect):
     elif keys_pressed[pygame.K_RIGHT] and ah_rect.x  < WIDTH - 105  :
       ah_rect.x +=5  
       
+mixer.music.load('audio/spacesound.mp3')
+mixer.music.set_volume(1.0)
+mixer.music.play(-1)
     
 while True:
     for event in pygame.event.get():
