@@ -22,10 +22,13 @@ scoreinact_font = pygame.font.Font('fonts/gamefont.ttf',40)
 #Allien hunter
 allien_hunter = pygame.image.load('pics/Hero.png').convert_alpha()
 ah_rect = allien_hunter.get_rect(midbottom =(200,600))
+ah_mask = pygame.mask.from_surface(allien_hunter)
 
 #Enemies
 alien = pygame.image.load('pics/alien.png').convert_alpha()
 aliens_list = []
+almasks_list = []
+
 #enemies respawn
 ALIENS_TIMER = pygame.USEREVENT + 1
 pygame.time.set_timer(ALIENS_TIMER,700)
@@ -35,7 +38,8 @@ border = pygame.Rect(0,50,WIDTH, 5)
 
 #Health 
 heart = pygame.image.load('pics/health.png').convert_alpha()
-heart_rect = heart.get_rect(midtop = (380,5))
+heart_rect = heart.get_rect()
+health = 5
 
 #Bullets 
 bullets = []
@@ -45,35 +49,22 @@ bullets = []
 #A2_HIT = pygame.USEREVENT + 2
 
 bullet_sound = pygame.mixer.Sound('audio/bulletsound.mp3')
-space_sound = pygame.mixer.Sound('audio/spacesound.mp3')
+#space_sound = pygame.mixer.Sound('audio/spacesound.mp3')
 
 game_active = True
-
-
-'''def aliens_move(enemy_list):
-    if enemy_list:
-        for enemy in enemy_list:
-            enemy.y += 3
-            screen.blit(alien,enemy)
-        enemy_list = [enemy for enemy in enemy_list if enemy.y > 700]
-        return enemy_list
-    else:
-        return []'''
         
-def handle_aliens(aliens_list):
+def handle_aliens(aliens_list,almasks_list):
     # Spawn new aliens periodically
     x = randint(0, WIDTH - alien.get_width())  # Random X position
     y = 60  # Fixed Y position
     new_alien_rect = alien.get_rect(midtop=(x, y))
     aliens_list.append(new_alien_rect)
+    almasks_list.append(pygame.mask.from_surface(alien))
 
 def shoot(bullets,ah_rect):
     for bullet in bullets:
         bullet.y -=15
-        '''if a1_rect.colliderect(bullet):
-            pygame.event.post(pygame.event.Event(A1_HIT))
-            bullets.remove(bullet)'''
-
+        
 def move_spaceship(keys_pressed, ah_rect):
     if keys_pressed[pygame.K_LEFT] and ah_rect.x > - 20:
       ah_rect.x -=5   
@@ -93,22 +84,36 @@ while True:
                 bullets.append(bullet)
         #Respawning event        
         if event.type == ALIENS_TIMER:
-            handle_aliens(aliens_list)
+            handle_aliens(aliens_list, almasks_list)
         
         
     if game_active:
         screen.blit(space_surf,(0,0))
         screen.blit(allien_hunter, ah_rect)
-        screen.blit(heart, heart_rect)
         pygame.draw.rect(screen,'black', border)
+        
+        #Drawing hearts at the top of the window
+        for i in range(health):
+            screen.blit(heart,(10+ (heart_rect.width + 10) * i, 10))
+        
         # Update positions of aliens in the list
-        for alien_rect in aliens_list:
+        # Getting familiar with the built-in function  "zip"
+        for alien_rect, alien_mask in zip(aliens_list,almasks_list):
             screen.blit(alien, alien_rect)
             alien_rect.y += 3
+            if ah_mask.overlap(alien_mask,(alien_rect.x - ah_rect.x, alien_rect.y - ah_rect.y)):
+                health -=1
+                aliens_list.remove(alien_rect)
+                almasks_list.remove(alien_mask)
+                if health <= 0:
+                    game_active = False
+                    
         #Spaceship bullets
         for bullet in bullets:
             pygame.draw.rect(screen,'red',bullet)
-                             
+    else:
+        screen.blit(space_surf,(0,0))
+                       
      
     keys_pressed= pygame.key.get_pressed()        
     move_spaceship(keys_pressed, ah_rect)     
